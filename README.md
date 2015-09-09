@@ -59,7 +59,7 @@ var xml = '<h1>Original Title</h1>';
 
 var tss ='h1 {content: "Replaced Title"; }';
 
-$template = new \Tranjsform\Builder($xml, $tss)
+template = new Tranjsform.Builder(xml, tss);
 
 console.log(template.output());
 
@@ -335,7 +335,7 @@ var tss ='
 .middle {content: "Middle paragraph"; }
 ';
 
-$template = new \Tranjsform\Builder($xml, $tss)
+template = new Tranjsform.Builder(xml, tss);
 
 console.log(template.output());
 
@@ -371,7 +371,7 @@ var tss ='
 p.middle {content: "Middle paragraph"; }
 ';
 
-$template = new \Tranjsform\Builder($xml, $tss)
+template = new Tranjsform.Builder(xml, tss);
 
 console.log(template.output());
 
@@ -416,7 +416,7 @@ var tss ='
 li > span {content: "REPLACED";}
 ';
 
-$template = new \Tranjsform\Builder($xml, $tss)
+template = new Tranjsform.Builder(xml, tss);
 
 console.log(template.output());
 
@@ -455,7 +455,7 @@ var tss ='
 #middle {content: "Middle paragraph"; }
 ';
 
-$template = new \Tranjsform\Builder($xml, $tss)
+template = new Tranjsform.Builder(xml, tss);
 
 console.log(template.output());
 
@@ -495,7 +495,7 @@ var tss ='
 textarea[name="Two"] {content: "TEST"; }
 ';
 
-$template = new \Tranjsform\Builder($xml, $tss)
+template = new Tranjsform.Builder(xml, tss);
 
 console.log(template.output());
 
@@ -538,7 +538,7 @@ var tss ='
 textarea[name] {content: "TEST"; }
 ';
 
-$template = new \Tranjsform\Builder($xml, $tss)
+template = new Tranjsform.Builder(xml, tss);
 
 console.log(template.output());
 
@@ -598,7 +598,7 @@ var tss ='
 	h1:before {content: "BEFORE ";}
 ';
 
-$template = new \Tranjsform\Builder($xml, $tss)
+template = new Tranjsform.Builder(xml, tss);
 
 console.log(template.output());
 
@@ -626,7 +626,7 @@ var tss ='
 	h1:after {content: " AFTER";}
 ';
 
-$template = new \Tranjsform\Builder($xml, $tss)
+template = new Tranjsform.Builder(xml, tss);
 
 console.log(template.output());
 
@@ -909,7 +909,7 @@ var xml = '
 
 var tss ='h1 {content: attr(class);}';
 
-$template = new \Tranjsform\Builder($xml, $tss);
+template = new Tranjsform.Builder(xml, tss);
 
 console.log(template.output());
 ```
