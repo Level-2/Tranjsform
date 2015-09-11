@@ -272,7 +272,6 @@ Lifted straight from css grammar, Tranjsform supports `display: none` which will
 
 ```php
 
-```php
 var xml = '<ul>
 	<li>
 		<h3>Name</h3>
@@ -574,7 +573,7 @@ table tr.list td[colspan="2"] {}
 Will match any td with a colspan of 2 that is in a tr with a class `list` and inside a `table` element
 
 
-## Unsupoorted selectors
+## Unsupported selectors
 
 Currently the CSS selectors `~` and `+` are not supported.
 
