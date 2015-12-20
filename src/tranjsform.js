@@ -3,65 +3,207 @@
 
 window.Tranjsform = function() {};
 
+
 Tranjsform.Builder = function(template, tss, data) {
 
-	this.template = new Tranjsform.Template('<template>' + template + '</template>');
-	this.tss = new Tranjsform.Sheet(tss);
-	this.data = new Tranjsform.DataFunction(data);
+	this.template = template;
+	this.tss = tss;
+	this.cache = new Tranjsform.Cache;
 	this.registeredProperties = [];
+	this.formatters = [];
+	this.locale = null;
+	this.baseDir = '';
+	this.time = null;
 
-	this.output = function(string) {
-		var rules = this.tss.parse();
-
-		for (var i = 0; i < rules.length; i++) {
-			var pseudoMatcher = new Tranjsform.PseudoMatcher(rules[i].pseudo, this.data);
-			var hook = new Tranjsform.Hook(rules[i].rules, pseudoMatcher, this.data);
-
-			for (var name in this.registeredProperties) {
-				hook.registerProperty(name, this.registeredProperties[name]);				
-			}
-
-			this.template.addHook(rules[i].query, hook);
-		}
-
-		return this.template.output();
+	this.setTime = function(time) {
+		this.time = time;
 	};
 
+	this.output = function(data, document) {
+		var locale = this.getLocale();
+		var data = new Tranjsform.DataFunction(data, locale, this.baseDir);
+		var headers = [];
+
+		this.registerBasicProperties(data, locale, headers);
+
+		var cachedOutput = this.loadTemplate();
+
+		var template = new Tranjsform.Template(this.isValidDoc(cachedOutput.body) ? cachedOutput.body : '<template>' + cachedOutput.body + '</template>');
+
+		var rules = this.getRules(template);
+		for (var i = 0; i < rules.length; i++) {
+			if (rules[i].shouldRun(this.time)) this.executeTssRule(rules[i], template, data);
+		}
+
+		var result = {'body': template.output(document), 'headers': cachedOutput.headers.concat(headers)};
+		this.cache.write(this.template, result);
+
+		result.body = this.doPostProcessing(template).output(document);
+		return result;
+	};
+
+	this.registerBasicProperties = function(data, locale, headers) {
+		var formatter = new Tranjsform.Hook.Formatter();
+		formatter.register(new Tranjsform.Formatter.Number(locale));
+		formatter.register(new Tranjsform.Formatter.Date(locale));
+		formatter.register(new Tranjsform.Formatter.StringFormatter());
+
+		for (var i in this.formatters) formatter.register(this.formatters[i]);
+
+		this.registerProperty('content', new Tranjsform.Property.Content(data, headers, formatter));
+		this.registerProperty('repeat', new Tranjsform.Property.Repeat(data));
+		this.registerProperty('display', new Tranjsform.Property.Display());
+		this.registerProperty('bind', new Tranjsform.Property.Bind(data));
+	};
+
+
+	this.doPostProcessing = function(template) {
+		template.addHook('//*[@transphporm]', new Tranjsform.Hook.PostProcess());
+		return template;
+	};
+
+	this.executeTssRule = function(rule, template, data) {
+		rule.touch();
+		var hook = new Tranjsform.Hook(rule.properties, new Tranjsform.PseudoMatcher(rule.pseudo, data), data);
+		for (var name in this.registeredProperties) hook.registerProperty(name, this.registeredProperties[name]);
+		template.addHook(rule.query, hook);
+	};
+
+	this.loadTemplate = function() {
+		if (this.template.trim().charAt(0) !== '<') {
+			var xml = this.cache.load(this.template, new Date().getTime());
+			return xml ? xml : {'body': this.fileGetContents(this.template), 'headers': []};
+		}
+		return {'body': this.template, 'headers': []};
+	};
+
+
+	this.getRules = function(template) {
+		if (this.tss.trim().substr(this.tss.length, -4).toLowerCase() == '.tss') {
+			this.baseDir = this.tss.match(/.*\//);
+
+			var key = this.tss + template.getPrefix() + this.baseDir;
+
+			var rules = this.cache.load(key, new Date().getTime());
+
+			if (!rules) return this.cache.write(key, new Sheet(this.fileGetContents(this.tss), this.baseDir, template.getPrefix()).parse());
+
+		}
+		else return new Tranjsform.Sheet(this.tss, this.baseDir, template.getPrefix()).parse();
+	};
+
+	this.fileGetContents = function (url, timeout) {
+		if (timeout == null) timeout = new Date().getTime() + (10 * 1000);
+
+		var xhttp = new XMLHttpRequest();
+		var loaded = false;
+		var response = '';
+
+		xhttp.onreadystatechange = function() {
+			if (xhttp.readyState == 4 && xhttp.status == 200) {
+				loaded = true;
+				response = xhttp.responseText;
+			}
+		};
+		xhttp.open('GET', url, true);
+		xhttp.send();
+
+		while (!loaded && new Date().getTime() < timeout) {}
+
+		return response;
+	};
+
+	this.setCache = function(cache) {
+		this.cache = new Tranjsform.Cache(cache);
+	};
+
+	this.getLocale = function() {
+		if (typeof this.locale === 'string') return Tranjsform.Locale[this.locale];
+		else if (this.locale === null) return Tranjsform.Locale['enGB'];
+		else return this.locale
+	};
+	
 	this.registerProperty = function(name, closure) {
 		this.registeredProperties[name] = closure;
 	};
 
-	var basicProperties = new Tranjsform.BasicProperties(this.data);
-	//some way to do this without the closures? .bind? .call?
-	this.registerProperty('content', function(value, element, rule) { return basicProperties.content(value, element, rule); });
-	this.registerProperty('repeat', function(value, element, rule) { return basicProperties.repeat(value, element, rule); });
-	this.registerProperty('display', function(value, element, rule) { return basicProperties.display(value, element, rule); });
+	this.registerFormatter = function(formatter) {
+		this.formatters.push(formatter);
+	};
+
+	this.isValidDoc = function(xml) {
+		return (xml.indexOf('<!') === 0 || xml.indexOf('<?') === 0);
+	};
 };
+
+Tranjsform.Locale = function() {};
+
+
+
+
+
+Tranjsform.Cache = function(obj) {
+	if (!obj) this.obj = {};
+	else this.obj = obj;
+
+
+	this.write = function(key, content) {
+		this.obj[key] = {'content': content, 'timestamp': new Date().getTime()};
+		return content;
+	};
+
+	this.load = function(key, modified) {
+		if (this.obj[key] && this.obj[key].timestamp >= modified) {
+			return this.cache[key].content;
+		}
+		else return false;
+	};
+};
+
 
 Tranjsform.Template = function(xml) {
 	this.hooks = [];
-
 	var parser = new DOMParser();
+	this.prefix = null;
 	this.document = parser.parseFromString(xml, "text/xml");
+
+	if (this.document.documentElement.namespaceURI !== null) {
+		this.prefix = this.document.documentElement.namespaceURI;
+	}
 
 	this.addHook = function(xpath, hook) {
 		this.hooks.push({'xpath': xpath, 'hook': hook});
 	};
 
-	this.processHook = function(query, hook) {
-		var xpath = this.selectXPath(query, this.document);
+	this.getPrefix = function() {
+		return this.prefix;
+	}
 
-		var el;
-		var elements = [];
+	this.processHooks = function() {
+		for (var h in this.hooks) {
+			var query = this.hooks[h]['xpath'];
+			var hook = this.hooks[h]['hook'];
+			var xpath = this.selectXPath(query, this.document);
+			var el;
+			var elements = [];
 
-		while (el = xpath.next()) elements.push(el);
+			//Cache the matched elements because running the hook may alter the document
+			while (el = xpath.next()) elements.push(el);
 
-		for (var i = 0; i < elements.length; i++) hook.run(elements[i]);
+			for (var i = 0; i < elements.length; i++) hook.run(elements[i]);
+		}
+
+		this.hooks = [];		
 	};
 
-	this.output = function() {
-		for (var i = 0; i < this.hooks.length; i++) this.processHook(this.hooks[i].xpath, this.hooks[i].hook);
-		return this.document.documentElement.innerHTML;
+	this.output = function(document) {
+		this.processHooks();
+
+		if (document) return this.document;
+
+		
+		if (this.document.documentElement.tagName.toLowerCase() == 'template') return this.document.documentElement.innerHTML;
+		else return this.document.documentElement.outerHTML;
 	};
 
 	//http://www.ahristov.com/tutorial/javascript-tips/Browser%2Bindependant%2BXPath%2Bevaluation.html
@@ -88,52 +230,129 @@ Tranjsform.Template = function(xml) {
 	};
 };
 
-Tranjsform.Sheet = function(tss) {
+Tranjsform.Sheet = function(tss, baseDir, prefix) {
 	this.tss = tss;
+	this.baseDir = baseDir;
+	this.prefix = prefix;
 
-	this.parse = function() {
-		var tss = this.tss;
-		var rules = [];
-		var pos = 0;
+	this.parse = function(pos, rules) {
+		if (!pos) pos = 0;
+		if (!rules) rules = [];
 		var next = 0;
-
-		while ((next = tss.indexOf('{', pos)) > -1) {
-			var rule = [];
+		while ((next = this.tss.indexOf('{', pos)) > -1) {
+			var processing = null;
+			if (processing = this.processingInstructions(this.tss, pos, next)) {
+				pos = processing['endPos']+1;
+				for (var item in processing[rules]) {
+					rules[item] = processing[rules][item];
+  				}
+  
+			}
+			
 			var selector = tss.substring(pos, next).trim();
-			var x = new Tranjsform.CssToXpath(selector);
-
-			rule.query = x.getXpath();
-			rule.pseudo = x.getPseudo();
-
+			var rule = this.CssToRule(selector, rules.length);
 			pos = tss.indexOf('}', next)+1;
-			rule.rules = this.getRules(tss.substring(next+1, pos-1).trim());
+
+			rule.properties = this.getProperties(tss.substring(next+1, pos-1).trim());
 
 			rules.push(rule);
 		}
 		return rules;
 	};
 
+	this.CssToRule = function(selector, index) {
+		var xPath = new Tranjsform.CssToXpath(selector, this.prefix);
+		var rule = new Tranjsform.Rule(xPath.getXpath(), xPath.getPseudo(), xPath.getDepth(), index++);
+		return rule;
+	};
 
-	this.getRules = function(str) {
+	this.processingInstructions = function(tss, pos, next) {
+		var rules = [];
+		var atPos = -1;
+		while ((atPos = tss.indexOf('@', 'pos')) !== -1) {
+			if (atPos <= next) {
+				var spacePos = this.tss.indexOf(' ', atPos);
+				var funcName = this.tss.substring(atPos+1, spacePos-atPos-1);
+				pos = this.tss.indexOf(';', spacePos);
+				var args = this.tss.substring(spacePos+1, pos-spacePos-1);
+				
+				var result = this[funcName](args);
+				for (var i in result) {
+					rules[i] = result[i];
+				}
+			}
+			else break;
+		}
+	};
+
+	this.import = function(args) {;
+		var builder = new Tranjsform.Builder;
+		var sheet = new Sheet(builder.fileGetContents(this.baseDir . args.replace(new RegExp('^[\'"\s]+.*[\'"\s]+$'))), this.baseDir);
+		return sheet.parse();
+	};
+
+	this.getProperties = function(str) {
+		var stringExtractor = new Tranjsform.StringExtractor(str);
+
 		var rules = str.split(';');
 		var ret = [];
 
 		for (var i = 0; i < rules.length; i++) {
 
 			if (rules[i].trim() == '') continue;
-			//!!
+			
 			var parts = rules[i].split(':', 2)
 
-			ret[parts[0].trim()] = parts[1];
+			parts[1] = stringExtractor.rebuild(parts[1]);
+			ret[parts[0].trim()] = parts[1] ? parts[1].trim() : '';
 		}
 
 		return ret;
 	};
 };
 
+Tranjsform.Rule = function(query, pseudo, depth, index, properties) {
+	this.query = query;
+	this.pseudo = pseudo;
+	this.depth = depth;
+	this.index = index;
+	this.properties = properties ? properties : [];
+	this.lastRun = 0;
+
+	this.S = 1000;
+	this.M = 60;
+	this.H = this.M * 60;
+	this.D = this.H * 24;
+
+	this.touch = function() {
+		this.lastRun = new Date().getTime();
+	};
+
+	this.shouldRun = function(time) {
+		if (this.properties['update-frequency'] && this.lastRun !== 0) {
+			frequency = this.properties['update-frequency'];
+			var stat = {'always': true, 'never': false};
+			if (stat[frequency]) return stat[frequency];
+			else return this.timeFrequency(frequency, time);
+		}
+		return true;
+	};
+
+	this.timeFrequency = function(frequency, time) {
+		if (!time) time = new Date().getTime();
+
+		var num = parseInt(frequency);
+		var unit = frequency.replace(num.toString(), '').toUpperCase();
+
+		var offset = num * this[unit];
+
+		if (time > this.lastRun + offset) return true;
+		else return false;
+	};
+};
 
 Tranjsform.CssToXpath = function(css) {
-
+	this.depth = 0;
 	this.css = css.replace(' >', '>').replace('> ', '>').trim();
 
 	this.specialChars = [' ', '.', '>', '~', '#', ':', '[', ']'];
@@ -182,6 +401,8 @@ Tranjsform.CssToXpath = function(css) {
 		var selectors = this.split(css);
 		var xpath = '/';
 
+		this.depth = selectors.length;
+
 		for (var i = 0; i < selectors.length; i++) {
 			if (this.translators[selectors[i].type]) {
 				xpath += this.translators[selectors[i].type](selectors[i].string);
@@ -197,6 +418,9 @@ Tranjsform.CssToXpath = function(css) {
 		return parts;
 	};
 
+	this.getDepth = function() {
+		return this.depth;
+	};
 };
 
 
@@ -208,16 +432,16 @@ Tranjsform.Hook = function(rules, pseudoMatcher, dataFunction) {
 
 	this.run = function(element) {
 		if (!this.pseudoMatcher.matches(element)) return;
-
 		for (var name in this.rules) {
 			var result = this.callProperty(name, element, this.parseValue(this.rules[name].trim(), element));
-			if (result === false) return;
+			if (result === false) break;
 		}
 	};
 
 	this.callProperty = function(name, element, value) {
 		if (this.properties[name]) {
-			return this.properties[name](value, element, this);
+
+			return this.properties[name].run(value, element, this);
 		}
 	};
 
@@ -290,22 +514,188 @@ Tranjsform.Hook = function(rules, pseudoMatcher, dataFunction) {
 	};
 };
 
-Tranjsform.BasicProperties = function(data) {
-	this.data = data;
 
-	this.content = function(value, element, rule) {
-		var attr
-		if (attr = rule.pseudoMatcher.attr()) element.setAttribute(attr, value);
-		else if (rule.pseudoMatcher.pseudo.indexOf('before') > -1) element.firstChild.nodeValue = value.join('') + element.firstChild.nodeValue;
-		else if (rule.pseudoMatcher.pseudo.indexOf('after') > - 1) element.firstChild.nodeValue += value.join('');
-		else element.firstChild.nodeValue = value.join('');
+Tranjsform.Hook.PostProcess = function() {
+	this.run = function(element) {
+		var transform = element.getAttribute('transphporm');
+
+		if (transform == 'remove') element.parentNode.removeChild(element);
+		else element.removeAttribute('transphporm');
+	};
+};
+
+
+Tranjsform.Hook.Formatter = function() {
+	this.formatters = [];
+
+	this.register = function(formatter) {
+		this.formatters.push(formatter);
 	};
 
-	this.repeat = function(value, element, rule) {
+	this.format = function(value, rules) {
+		if (!rules.format) return value;
+
+		var format = new Tranjsform.StringExtractor(rules.format);
+		var options = format.getString().split(' ');
+		var functionName = options.shift();
+		//CHECK
+		for (var i = 0; i < options.length; i++) options[i] = format.rebuild(options[i]).replace(new RegExp('^[\'"]+.*[\'"]+$'));
+
+		return this.processFormat(options, functionName, value);
+	};
+
+	this.processFormat = function(format, functionName, value) {
+		for (var i in value) {
+			for (var j in formatters) {
+				if (this.formatters[j][functionName]){
+					value[i] = this.formatters[j][functionName]([value[i]], format);
+				}
+			}
+		}
+
+		return value;
+	};
+
+
+};
+
+
+Tranjsform.StringExtractor = function(str) {
+
+	this.extractStrings = function(str) {
+		var pos = 0;
+		var num = 0;
+		var strings = [];
+
+		while ((pos = str.indexOf('"', pos+1)) !== -1) {
+			var end = str.indexOf('"', pos+1);
+			while (str.charAt[end-1] == '\\') end = str.indexOf('"', end+1);
+
+			strings['$+STR' + ++num] = str.substring(pos, end-pos+1);
+			str = str.replace(strings['$+STR' + num], '$+STR' + num);
+		}
+
+		return [str, strings];
+	};
+
+	this.rebuild = function(str) {
+		for (var key in this.stringTable) {
+			str = str.replace(key, this.stringTable[key]);
+		}
+		return str;
+	};
+
+	this.getString = function() {
+		return this.str;
+	}
+
+	var parts = this.extractStrings(str);
+	this.str = parts[0];
+	this.stringTable = parts[1];
+
+};
+
+Tranjsform.Property = function() {};
+
+
+Tranjsform.Property.Content = function(data, headers, formatter) {
+	this.data = data;
+	this.headers = headers;
+	this.formatter = formatter;
+
+	this.run = function(value, element, rule) {
+		value = this.formatter.format(value, rule.rules);
+		if (!this.processPseudo(value, element, rule)) {
+			this.removeAllChildren(element);
+
+			if (this.getContentMode(rule.rules) === 'replace') this.replaceContent(element, value);
+			else this.appendContent(element, value);
+		}
+	};
+
+	this.getContentMode = function(rules) {
+		return rules['content-mode'] ? rules['content-mode'] : 'append';
+	};
+
+	this.processPseudo = function(value, element, rule) {
+		return this.pseudoAttr(value, element, rule) || this.pseudoHeader(value, element, rule) || this.pseudoBefore(value, element, rule) || this.pseudoAfter(value, element, rule);
+	};
+
+	this.pseudoAttr = function(value, element, rule) {
+		var attr = '';
+		if (attr = rule.pseudoMatcher.attr()) {
+			element.setAttribute(attr, value.join(''));
+			return true;
+		}
+	};
+
+	this.pseudoHeader = function(value, element, rule) {
+		var header = '';
+		if (header = rule.pseudoMatcher.header(element)) {
+			this.headers.push([header, value.join('')]);
+			return true;
+		}
+	};
+
+
+	this.pseudoBefore = function(value, element, rule) {
+		if (rule.pseudoMatcher.pseudo.indexOf('before') != -1) {
+			element.firstChild.nodeValue = value.join('') + element.firstChild.nodeValue;
+			return true;
+		}
+	};
+
+	this.pseudoAfter = function(value, element, rule) {
+		if (rule.pseudoMatcher.pseudo.indexOf('after') != -1) {
+			element.firstChild.nodeValue += value.join('');
+			return true;
+		}
+	};
+
+	this.appendToIfNode = function(element, content) {
+		if (content[0] && content[0].nodeType > 0) {
+			for (var i = 0; i < content.length; i++) {
+				var node = element.ownerDocument.importNode(content[i], true);
+				element.appendChild(node);
+			}
+			return true;
+		}
+		return false;
+	};
+
+	this.replaceContent = function(element, content) {
+		if (!this.appendToIfNode(element.parentNode, content)) {
+			element.parentNode.appendChild(element.ownerDocument.createElement('span', content.join('')));
+		}
+		element.setAttribute('transphporm', 'remove');
+	};
+
+	this.appendContent = function(element, content) {
+		if (!this.appendToIfNode(element, content)) {
+			element.appendChild(element.ownerDocument.createTextNode(content.join('')));
+		}
+	};
+
+	this.removeAllChildren = function(element) {
+		while (element.hasChildNodes()) element.removeChild(element.firstChild);
+	}
+
+
+
+	this.display = function(value, element, rule) {
+		if (value[0].toLowerCase() == 'none') element.parentNode.removeChild(element);
+	};
+};
+
+
+Tranjsform.Property.Repeat = function(data) {
+	this.data = data;
+
+	this.run = function(value, element, rule) {
 		for (var i = 0; i < value.length; i++) {
 			var clone = element.cloneNode(true);
 
-			this.data.bind(clone, value[i]);
+			this.data.bind(clone, value[i], 'iteration');
 
 			element.parentNode.insertBefore(clone, element);
 
@@ -327,29 +717,41 @@ Tranjsform.BasicProperties = function(data) {
 		//don't run other hooks for this node
 		return false;
 	};
-
-	this.display = function(value, element, rule) {
-		if (value[0].toLowerCase() == 'none') element.parentNode.removeChild(element);
-	};
 };
 
 
+Tranjsform.Property.Display = function() {
+	this.run = function(value, element, rule) {
+		if (value[0].toLowerCase() === 'none') element.setAttribute('transphporm', 'remove');
+		else element.setAttribute('transphporm', 'show');
+	};
+};
 
-Tranjsform.DataFunction = function(data) {
+Tranjsform.Property.Bind = function() {
+
+};
+
+Tranjsform.DataFunction = function(data, locale, baseDir) {
 	this._data = data;
+	this.locale = locale;
+	this.baseDir = baseDir;
 
-	this.bind  = function(element, value) {
-		element.__tssData = value;
+	this.bind  = function(element, data, type) {
+		if (!type) type = 'data';
+		if (data[0] && data.length === 1 && typeof data[0] === 'object')  data = data[0];
+
+		if (!element.__tssData) element.__tssData = {};
+		element.__tssData[type] = data;
 	};
 
 	this.iteration = function(val, element) {
-		var data = this.getData(element);
+		var data = this.getData(element, 'iteration');
 		return this.traverse(val, data);
 	};
 
-	this.getData = function(element) {
+	this.getData = function(element, type) {
 		while (element) {
-			if (element.__tssData) return element.__tssData;
+			if (element.__tssData && element.__tssData[type]) return element.__tssData[type];
 			element = element.parentNode;
 		}
 		return this._data;
@@ -450,5 +852,16 @@ Tranjsform.PseudoMatcher = function(pseudo, dataFunction) {
 
 		return false;
 	};
+
+
+	this.header = function(element) {
+		if (this.matches(element)) {
+			for (var i in this.pseudo) {
+				if (pseudo[i].indexOf('header') === 0) return this.getBetween(pseudo[i], '[', ']');
+			}
+		}
+	};
+
 };
+
 }());

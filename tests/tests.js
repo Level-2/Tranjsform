@@ -7,9 +7,9 @@ QUnit.test( "content simple", function( assert ) {
   var css = 'ul li {content: data(user);}';
   var data = {'user': 'tom'};
 		
-  var template = new Tranjsform.Builder(template, css, data);
+  var template = new Tranjsform.Builder(template, css);
 
-  assert.equal(template.output(), '<ul><li>tom</li></ul>');
+  assert.equal(template.output(data).body, '<ul><li>tom</li></ul>');
 });
 
 
@@ -19,9 +19,9 @@ QUnit.test( "content object", function( assert ) {
 	var css = 'ul li {content: data(user.name);}';
 	var data = {'user': {'name': 'tom'}};
 
-	template = new Tranjsform.Builder(template, css, data);
+	template = new Tranjsform.Builder(template, css);
 		
-	assert.equal('<ul><li>tom</li></ul>', template.output()); 
+	assert.equal('<ul><li>tom</li></ul>', template.output(data).body); 
 });
 
 
@@ -32,7 +32,7 @@ QUnit.test( "repeat basic", function( assert ) {
 
 	template = new Tranjsform.Builder(template, css, data);
 		
-	assert.equal('<ul><li>One</li><li>Two</li><li>Three</li></ul>', template.output()); 
+	assert.equal('<ul><li>One</li><li>Two</li><li>Three</li></ul>', template.output(data).body); 
 });
 
 QUnit.test( "repeat object", function( assert ) {
@@ -46,9 +46,9 @@ QUnit.test( "repeat object", function( assert ) {
 	data.list.push({'id': 'Two'});
 	data.list.push({'id': 'Three'});
 
-	template = new Tranjsform.Builder(template, css, data);
+	template = new Tranjsform.Builder(template, css);
 		
-	assert.equal('<ul><li>One</li><li>Two</li><li>Three</li></ul>', template.output()); 
+	assert.equal('<ul><li>One</li><li>Two</li><li>Three</li></ul>', template.output(data).body); 
 });
 
 
@@ -63,8 +63,8 @@ QUnit.test( "repeat object child node", function( assert ) {
 	data.list.push({'id': 'Two'});
 	data.list.push({'id': 'Three'});
 
-	template = new Tranjsform.Builder(template, css, data);
-		
+	template = new Tranjsform.Builder(template, css);
+	
 	assert.equal(stripTabs('<ul>' +
 					'<li>' +
 					'	<span>One</span>' +
@@ -75,7 +75,7 @@ QUnit.test( "repeat object child node", function( assert ) {
 					'<li>' +
 					'	<span>Three</span>' +
 					'</li>' +
-					'</ul>'), stripTabs(template.output())); 
+					'</ul>'), stripTabs(template.output(data).body)); 
 
 });
 
@@ -92,7 +92,7 @@ QUnit.test( "repeat object child nodes", function( assert ) {
 	data.list.push({'name': 'Two', 'id': 2});
 	data.list.push({'name': 'Three', 'id': 3});
 
-	template = new Tranjsform.Builder(template, css, data);
+	template = new Tranjsform.Builder(template, css);
 		
 	assert.equal(stripTabs('<ul>' +
 			'<li>' +
@@ -105,7 +105,7 @@ QUnit.test( "repeat object child nodes", function( assert ) {
 			'	<h2>3</h2>' +
 			'	<span>Three</span>' +
 			'</li>' +
-		'</ul>'), stripTabs(template.output())); 
+		'</ul>'), stripTabs(template.output(data).body)); 
 });
 
 QUnit.test( "quoted content", function( assert ) {
@@ -114,7 +114,7 @@ QUnit.test( "quoted content", function( assert ) {
 
 	template = new Tranjsform.Builder(template, tss);
 
-	assert.equal('<h1>TEST</h1>', template.output());
+	assert.equal('<h1>TEST</h1>', template.output().body);
 
 });
 
@@ -124,7 +124,7 @@ QUnit.test( "quoted content with escape", function( assert ) {
 
 	template = new Tranjsform.Builder(template, tss);
 
-	assert.equal('<h1>TEST"TEST</h1>', template.output());
+	assert.equal('<h1>TEST"TEST</h1>', template.output().body);
 });
 
 QUnit.test( "multiple content values", function( assert ) {
@@ -133,7 +133,7 @@ QUnit.test( "multiple content values", function( assert ) {
 
 	template = new Tranjsform.Builder(template, tss);
 
-	assert.equal('<h1>AB</h1>', template.output());
+	assert.equal('<h1>AB</h1>', template.output().body);
 });
 
 
@@ -143,7 +143,7 @@ QUnit.test( "match class and tag", function( assert ) {
 
 	template = new Tranjsform.Builder(template, tss);
 
-	assert.equal('<h1>Test 1</h1><h1 class="test">REPLACED</h1><h1>Test 2</h1>', template.output());
+	assert.equal('<h1>Test 1</h1><h1 class="test">REPLACED</h1><h1>Test 2</h1>', template.output().body);
 });
 
 QUnit.test( "match class child", function( assert ) {
@@ -153,7 +153,7 @@ QUnit.test( "match class child", function( assert ) {
 
 	template = new Tranjsform.Builder(template, tss);
 
-	assert.equal('<div><span class="foo">REPLACED</span><span class="bar">test</span></div>', template.output());
+	assert.equal('<div><span class="foo">REPLACED</span><span class="bar">test</span></div>', template.output().body);
 });
 
 
@@ -165,7 +165,7 @@ QUnit.test( "child node matcher", function( assert ) {
 
 	template = new Tranjsform.Builder(template, tss);
 
-	assert.equal('<div><span class="foo">REPLACED</span><span class="bar">test</span></div>', template.output());
+	assert.equal('<div><span class="foo">REPLACED</span><span class="bar">test</span></div>', template.output().body);
 });
 
 
@@ -184,7 +184,7 @@ QUnit.test( "attribute selector", function( assert ) {
 	assert.equal(stripTabs('<div>' +
 			'<textarea name="foo">REPLACED</textarea>' +
 			'<textarea>bar</textarea>' +
-		'</div>'), stripTabs(template.output()));
+		'</div>'), stripTabs(template.output().body));
 });
 
 
@@ -202,7 +202,7 @@ QUnit.test( "attribute selector (b)", function( assert ) {
 	assert.equal(stripTabs('<div>' +
 			'<textarea>bar</textarea>' +
 			'<textarea name="foo">REPLACED</textarea>' +
-		'</div>'), stripTabs(template.output()));
+		'</div>'), stripTabs(template.output().body));
 
 });
 
@@ -220,7 +220,7 @@ QUnit.test( "attribute selector (c)", function( assert ) {
 	assert.equal(stripTabs('<div>' +
 			'<a name="foo">a link</a>' +
 			'<textarea name="foo">REPLACED</textarea>' +
-		'</div>'), stripTabs(template.output()));
+		'</div>'), stripTabs(template.output().body));
 
 });
 
@@ -236,7 +236,7 @@ QUnit.test( "dispay none", function( assert ) {
 
 	assert.equal(stripTabs('<div>' +
 			'<a name="foo">a link</a>' +
-		'</div>'), stripTabs(template.output()));
+		'</div>'), stripTabs(template.output().body));
 
 });
 
@@ -247,7 +247,7 @@ QUnit.test( ":before", function( assert ) {
 
 	template = new Tranjsform.Builder(template, tss);
 
-	assert.equal('<div>BEFORETest</div>', template.output());
+	assert.equal('<div>BEFORETest</div>', template.output().body);
 });
 
 QUnit.test( ":after", function( assert ) {
@@ -257,7 +257,7 @@ QUnit.test( ":after", function( assert ) {
 
 	template = new Tranjsform.Builder(template, tss);
 
-	assert.equal('<div>TestAFTER</div>', template.output());
+	assert.equal('<div>TestAFTER</div>', template.output().body);
 });
 
 
@@ -283,7 +283,7 @@ QUnit.test( "iteration pseudo", function( assert ) {
 		'ul li span:iteration[id="2"] {display: none;}';
 
 
-	template = new Tranjsform.Builder(template, tss, data);
+	template = new Tranjsform.Builder(template, tss);
 
 	assert.equal(stripTabs('<ul>' +
 			'<li>' +
@@ -295,7 +295,7 @@ QUnit.test( "iteration pseudo", function( assert ) {
 			'	<h2>3</h2>' +
 			'	<span>Three</span>' +
 			'</li>' +
-		'</ul>'), stripTabs(template.output()));
+		'</ul>'), stripTabs(template.output(data).body));
 
 });
 
@@ -324,7 +324,7 @@ QUnit.test( "multi pseudo", function( assert ) {
 		'ul li span:iteration[id="2"]:before {content: "BEFORE"}';
 
 
-	template = new Tranjsform.Builder(template, tss, data);
+	template = new Tranjsform.Builder(template, tss);
 
 	assert.equal(stripTabs('<ul>' +
 			'<li>' +
@@ -337,7 +337,7 @@ QUnit.test( "multi pseudo", function( assert ) {
 			'	<h2>3</h2>' +
 			'	<span>Three</span>' +
 			'</li>' +
-		'</ul>'), stripTabs(template.output()));
+		'</ul>'), stripTabs(template.output(data).body));
 
 });
 
@@ -360,7 +360,7 @@ QUnit.test( ":nth-child", function( assert ) {
 				'<li>REPLACED</li>' +
 				'<li>Three</li>' +
 				'<li>Four</li>' +
-			'</ul>'), stripTabs(template.output()));
+			'</ul>'), stripTabs(template.output().body));
 
 });
 
@@ -383,7 +383,7 @@ QUnit.test( ":nth-child(odd)", function( assert ) {
 				'<li>Two</li>' +
 				'<li>REPLACED</li>' +
 				'<li>Four</li>' +
-			'</ul>'), stripTabs(template.output()));
+			'</ul>'), stripTabs(template.output().body));
 
 });
 
@@ -406,7 +406,7 @@ QUnit.test( ":nth-child(even)", function( assert ) {
 				'<li>REPLACED</li>' +
 				'<li>Three</li>' +
 				'<li>REPLACED</li>' +
-			'</ul>'), stripTabs(template.output()));
+			'</ul>'), stripTabs(template.output().body));
 
 });
 
@@ -419,7 +419,7 @@ QUnit.test( "read attribute", function( assert ) {
 
 	template = new Tranjsform.Builder(template, tss);
 
-	assert.equal('<div class="fromattribute">fromattribute</div>', template.output());
+	assert.equal('<div class="fromattribute">fromattribute</div>', template.output().body);
 
 });
 
@@ -431,6 +431,6 @@ QUnit.test( "write attribute", function( assert ) {
 
 	template = new Tranjsform.Builder(template, tss);
 
-	assert.equal('<div class="classname">Test</div>', template.output());
+	assert.equal('<div class="classname">Test</div>', template.output().body);
 
 });
