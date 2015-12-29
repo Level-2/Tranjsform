@@ -70,7 +70,7 @@ Tranjsform.Builder = function(template, tss, data) {
 	};
 
 	this.loadTemplate = function() {
-		if (this.template.trim().charAt(0) !== '<') {
+		if (typeof this.template  == 'string' && this.template.trim().charAt(0) !== '<') {
 			var xml = this.cache.load(this.template, new Date().getTime());
 			return xml ? xml : {'body': this.fileGetContents(this.template), 'headers': []};
 		}
@@ -132,7 +132,7 @@ Tranjsform.Builder = function(template, tss, data) {
 	};
 
 	this.isValidDoc = function(xml) {
-		return (xml.indexOf('<!') === 0 || xml.indexOf('<?') === 0);
+		return typeof xml == 'object' || (xml.indexOf('<!') === 0 || xml.indexOf('<?') === 0);
 	};
 };
 
@@ -165,8 +165,11 @@ Tranjsform.Template = function(xml) {
 	this.hooks = [];
 	var parser = new DOMParser();
 	this.prefix = null;
-	this.document = parser.parseFromString(xml, "text/xml");
 
+	if (typeof xml == 'string') this.document = parser.parseFromString(xml, "text/xml");
+	else this.document = xml;
+
+	console.log(this.document.documentElement.innerHTML);
 	if (this.document.documentElement.namespaceURI !== null) {
 		this.prefix = this.document.documentElement.namespaceURI;
 	}
