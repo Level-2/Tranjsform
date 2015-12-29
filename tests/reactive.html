@@ -1,0 +1,36 @@
+<!doctype html>
+<html>
+	<head>
+		<title>Some title</title>
+		<script src="../src/tranjsform.js"></script>
+		<script src="../src/locale-enGB.js"></script>
+		<script src="../src/formatter.js"></script>
+
+		<script>
+
+
+		window.onload = function() {
+			var data = {};
+			data.title = 'Title from TSS';
+
+			var xml = document;
+			var tss = 'title {content: data(title); }';
+		
+
+			var template = new Tranjsform.Builder(xml, tss);
+
+			template.output(data, true);
+
+			document.getElementById('changetitle').addEventListener('keyup', function() {
+				console.log(this.value);
+				data.title = this.value;
+			});
+		};
+
+		</script>
+	</head>
+
+	<body>
+		<input id="changetitle" value="foo" />
+	</body>
+</html>
