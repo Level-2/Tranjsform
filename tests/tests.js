@@ -2,7 +2,26 @@ function stripTabs(str) {
 	return str.replace(/\t/g, '').replace(/\n/g, '');
 }
 
+QUnit.test(" reactive", function(assert) {
+
+
+	var template = '<ul><li>TEST1</li></ul>';
+
+	var css = 'ul li {content: data(user);}';
+  	var data = {'user': 'tom'};
+
+  	var template = new Tranjsform.Builder(template, css);
+  	var doc = template.output(data, true).body;
+
+  	assert.equal(doc.getElementsByTagName('li')[0].firstChild.nodeValue, 'tom');
+
+  	data.user = 'foo';
+
+	assert.equal(doc.getElementsByTagName('li')[0].firstChild.nodeValue, 'foo'); 
+});
+
 QUnit.test( "content simple", function( assert ) {
+
   var template = '<ul><li>TEST1</li></ul>';
   var css = 'ul li {content: data(user);}';
   var data = {'user': 'tom'};

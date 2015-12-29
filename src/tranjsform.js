@@ -190,7 +190,9 @@ Tranjsform.Template = function(xml) {
 			//Cache the matched elements because running the hook may alter the document
 			while (el = xpath.next()) elements.push(el);
 
-			for (var i = 0; i < elements.length; i++) hook.run(elements[i]);
+			for (var i = 0; i < elements.length; i++) {
+				hook.run(elements[i]);
+			}
 		}
 
 		this.hooks = [];		
@@ -424,11 +426,12 @@ Tranjsform.CssToXpath = function(css) {
 };
 
 
-Tranjsform.Hook = function(rules, pseudoMatcher, dataFunction) {
+Tranjsform.Hook = function(rules, pseudoMatcher, dataFunction, callback) {
 	this.rules = rules;
 	this.pseudoMatcher = pseudoMatcher;
 	this.dataFunction = dataFunction;
 	this.properties = [];
+	this.callback = callback;
 
 	this.run = function(element) {
 		if (!this.pseudoMatcher.matches(element)) return;
@@ -440,7 +443,6 @@ Tranjsform.Hook = function(rules, pseudoMatcher, dataFunction) {
 
 	this.callProperty = function(name, element, value) {
 		if (this.properties[name]) {
-
 			return this.properties[name].run(value, element, this);
 		}
 	};
@@ -463,7 +465,11 @@ Tranjsform.Hook = function(rules, pseudoMatcher, dataFunction) {
 			var finalPos = fn['endPoint'];
 
 			if (this.dataFunction[fn['name']]) {
-				var data = this.dataFunction[fn['name']](fn['params'], element);
+				this.dataName = fn['params'];
+				var self = this;
+				var data = this.dataFunction[fn['name']](fn['params'], element, function() {
+					self.run(element);
+				});
 
 				if (typeof data === 'string') result.push(data);
 				else result = result.concat(data);
@@ -735,6 +741,8 @@ Tranjsform.DataFunction = function(data, locale, baseDir) {
 	this._data = data;
 	this.locale = locale;
 	this.baseDir = baseDir;
+	this.callbacks = {};
+	this.properties = {};
 
 	this.bind  = function(element, data, type) {
 		if (!type) type = 'data';
@@ -757,8 +765,10 @@ Tranjsform.DataFunction = function(data, locale, baseDir) {
 		return this._data;
 	};
 
-	this.data = function(val, element) {
+	this.data = function(val, element, callback) {
+		this.observe(this._data, val, callback);
 		var data = this.getData(element);
+
 		return this.traverse(val, data);
 	};
 
@@ -777,7 +787,30 @@ Tranjsform.DataFunction = function(data, locale, baseDir) {
 	this.attr = function(val, element) {
 		return element.getAttribute(val.trim());
 	};
+
+	this.observe = function(object, prop, callback) {
+
+		if (!this.callbacks[prop]) this.callbacks[prop] = [];
+		this.callbacks[prop] = callback;
+
+		this.properties[prop] = object[prop];
+
+		var self = this;
+		Object.defineProperty(object, prop, {
+		    get: function() { 
+		    	return self.properties[prop];
+		    },
+		    set: function f(value) { 
+		   		self.properties[prop] = value;
+		   		for (var c in self.callbacks) self.callbacks[c]();
+			}
+		});
+		
+
+
+	}
 };
+
 
 
 Tranjsform.PseudoMatcher = function(pseudo, dataFunction) {
