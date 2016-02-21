@@ -879,8 +879,22 @@ Tranjsform.PseudoMatcher = function(pseudo, dataFunction) {
 	this.nth = function(pseudo, element) {
 		if (pseudo.indexOf('nth-child') == 0) {
 			var criteria = this.getBetween(pseudo, '(', ')');
+			
+			// In Internet Explorer 11, parentNode.children is undefined in some cases that come up for this library's usage.
+			var elements = element.parentNode.children;
+			if (!elements) {
+				elements = element.parentNode.childNodes;
+				for (var i = 0; i < elements.length;) {
+					if (!(elements[i] instanceof Element)) {
+						Array.prototype.splice.call(elements, i, 1);
+					} else {
+						i++;
+					}
+				}
+			}
+			
 			//Which child index is the current element?
-			var num = Array.prototype.indexOf.call(element.parentNode.children, element)+1;
+			var num = Array.prototype.indexOf.call(elements, element)+1;
 
 
 			if (this[criteria]) return this[criteria](num);
