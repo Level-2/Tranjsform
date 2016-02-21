@@ -168,8 +168,8 @@ Tranjsform.Template = function(xml) {
 
 	if (typeof xml == 'string') this.document = parser.parseFromString(xml, "text/xml");
 	else this.document = xml;
-
-	console.log(this.document.documentElement.innerHTML);
+	
+	//console.log(this.document.documentElement.innerHTML);
 	if (this.document.documentElement.namespaceURI !== null) {
 		this.prefix = this.document.documentElement.namespaceURI;
 	}
