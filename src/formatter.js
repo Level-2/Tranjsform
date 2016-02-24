@@ -53,7 +53,7 @@ Tranjsform.Formatter.StringFormatter = function() {
 };
 
 Tranjsform.Formatter.Date = function(locale) {
-	this,locale = locale;
+	this.locale = locale;
 
 	this.timeZones = {
 		'Europe/London': {
