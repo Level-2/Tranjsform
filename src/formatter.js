@@ -182,9 +182,9 @@ Tranjsform.Formatter.Date = function(locale) {
 				var parts = dateTime[0].split('-');
 				if (dateTime[1]) {
 					var time = dateTime[1].split(':');
-					return new Date(parts[0], parts[1], parts[2], time[0], time[1]);
+					return new Date(parts[0], parts[1]-1, parts[2], time[0], time[1]);
 				}
-				else return  new Date(parts[0], parts[1], parts[2]);				
+				else return  new Date(parts[0], parts[1]-1, parts[2]);				
 			}
 		}
 	};
