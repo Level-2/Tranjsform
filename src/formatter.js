@@ -12,7 +12,7 @@ Tranjsform.Formatter.Number = function(locale) {
 	this.locale = locale;
 
 	this.decimal = function(num, decimals) {
-		var parts = n.toString().split(".");
+		var parts = num.toString().split(".");
 
 		if (!parts[1]) parts[1] = '0';
 
