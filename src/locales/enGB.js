@@ -1,7 +1,7 @@
 Tranjsform.Locale.enGB = {
 	"thousands_separator": ",",
 	"decimal_separator": ".",
-	"currency": "£",
+	"currency": "\u00A3",
 	"currency_position": "before",
 	"currency_decimals": "2",
 	"date_format": "d/m/Y",
