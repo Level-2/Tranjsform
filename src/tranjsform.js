@@ -799,18 +799,18 @@ Tranjsform.DataFunction = function(data, locale, baseDir) {
 		this.properties[prop] = object[prop];
 
 		var self = this;
-		Object.defineProperty(object, prop, {
-		    get: function() { 
-		    	return self.properties[prop];
-		    },
-		    set: function f(value) { 
-		   		self.properties[prop] = value;
-		   		for (var c in self.callbacks) self.callbacks[c]();
-			}
-		});
-		
-
-
+		if ((!Object.seal || !Object.isSealed(object))
+		&& (!Object.freeze || !Object.isFrozen(object))) {
+			Object.defineProperty(object, prop, {
+				get: function() { 
+					return self.properties[prop];
+				},
+				set: function f(value) { 
+					self.properties[prop] = value;
+					for (var c in self.callbacks) self.callbacks[c]();
+				}
+			});
+		}
 	}
 };
 
