@@ -12,7 +12,7 @@ Tranjsform.Formatter.Number = function(locale) {
 	this.locale = locale;
 
 	this.decimal = function(num, decimals) {
-		var parts = n.toString().split(".");
+		var parts = num.toString().split(".");
 
 		if (!parts[1]) parts[1] = '0';
 
@@ -53,7 +53,7 @@ Tranjsform.Formatter.StringFormatter = function() {
 };
 
 Tranjsform.Formatter.Date = function(locale) {
-	this,locale = locale;
+	this.locale = locale;
 
 	this.timeZones = {
 		'Europe/London': {
@@ -182,9 +182,9 @@ Tranjsform.Formatter.Date = function(locale) {
 				var parts = dateTime[0].split('-');
 				if (dateTime[1]) {
 					var time = dateTime[1].split(':');
-					return new Date(parts[0], parts[1], parts[2], time[0], time[1]);
+					return new Date(parts[0], parts[1]-1, parts[2], time[0], time[1]);
 				}
-				else return  new Date(parts[0], parts[1], parts[2]);				
+				else return  new Date(parts[0], parts[1]-1, parts[2]);				
 			}
 		}
 	};

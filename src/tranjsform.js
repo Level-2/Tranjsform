@@ -555,9 +555,18 @@ Tranjsform.Hook.Formatter = function() {
 
 	this.processFormat = function(format, functionName, value) {
 		for (var i in value) {
-			for (var j in formatters) {
-				if (this.formatters[j][functionName]){
-					value[i] = this.formatters[j][functionName]([value[i]], format);
+			for (var j in this.formatters) {
+				if (this.formatters[j][functionName]) {
+					if (format.length > 0) {
+						var original_value = value[i];
+						value[i] = "";
+						for (var k in format) {
+							if (value[i] != "") { value[i] += " "; }
+							value[i] += this.formatters[j][functionName](original_value, format[k]);
+						}
+					} else {
+						value[i] = this.formatters[j][functionName](value[i]);
+					}
 				}
 			}
 		}

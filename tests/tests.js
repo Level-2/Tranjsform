@@ -453,3 +453,48 @@ QUnit.test( "write attribute", function( assert ) {
 	assert.equal('<div class="classname">Test</div>', template.output().body);
 
 });
+
+
+QUnit.test( "decimal formatting", function( assert ) {
+
+	var template = '<div>REPLACE</div>';
+
+	var tss = 'div {content: "123.45678"; format: decimal 3}';
+
+	template = new Tranjsform.Builder(template, tss);
+	
+	assert.equal('<div>123.456</div>', template.output().body);
+
+});
+
+QUnit.test( "locales", function( assert ) {
+
+	var template = '<div class="date">Date</div><div class="money">Money</div>';
+
+	var tss = '.date {content: "2015-12-22"; format: date} .money {content: "999999.99"; format: currency}';
+
+	template = new Tranjsform.Builder(template, tss);
+	
+	assert.equal('<div class="date">22/12/2015</div><div class="money">\u00A3999,999.99</div>', template.output().body);
+	
+	template.locale = "enUS";
+	
+	assert.equal('<div class="date">12/22/2015</div><div class="money">$999,999.99</div>', template.output().body);
+
+});
+
+QUnit.test( "locales with time", function( assert ) {
+
+	var template = '<div class="date">Date</div><div class="money">Money</div>';
+
+	var tss = '.date {content: "2015-12-22 14:34"; format: date} .money {content: "999999.99"; format: currency}';
+
+	template = new Tranjsform.Builder(template, tss);
+	
+	assert.equal('<div class="date">22/12/2015</div><div class="money">\u00A3999,999.99</div>', template.output().body);
+	
+	template.locale = "enUS";
+	
+	assert.equal('<div class="date">12/22/2015</div><div class="money">$999,999.99</div>', template.output().body);
+
+});
