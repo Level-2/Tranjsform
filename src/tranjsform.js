@@ -186,7 +186,7 @@ Tranjsform.Template = function(xml) {
 		for (var h in this.hooks) {
 			var query = this.hooks[h]['xpath'];
 			var hook = this.hooks[h]['hook'];
-			var xpath = this.selectXPath(query, this.document);
+			var xpath = Tranjsform.Shim.selectXPath(query, this.document);
 			var el;
 			var elements = [];
 
@@ -206,52 +206,8 @@ Tranjsform.Template = function(xml) {
 
 		if (document) return this.document;
 		
-		// Internet Explorer 11 doesn't put innerHTML or outerHTML on non-HTML tags created by DOMParser with mime "text/xml".
-		var outerHTML = function(node) {
-			if (node.outerHTML) {
-				return node.outerHTML;
-			} else {
-				var tempHolder = window.document.createElement("div");
-				tempHolder.appendChild(tempHolder.ownerDocument.importNode(node, true));
-				return tempHolder.innerHTML.trim();
-			}
-		};
-		var innerHTML = function(node) {
-			if (node.innerHTML) {
-				return node.innerHTML;
-			} else {
-				return outerHTML(node)
-					.replace(new RegExp("</"+node.tagName+">$", "i"), "")
-					.replace(new RegExp("^<"+node.tagName+"[^>]*>", "i"), "")
-					.trim();
-			}
-		};
-		
-		if (this.document.documentElement.tagName.toLowerCase() == 'template') return innerHTML(this.document.documentElement);
-		else return outerHTML(this.document.documentElement);
-	};
-
-	//http://www.ahristov.com/tutorial/javascript-tips/Browser%2Bindependant%2BXPath%2Bevaluation.html
-	this.selectXPath = function(expr, node) {
-	  if (document.evaluate) {
-	    return {
-	      list : node.evaluate(expr,node,null,XPathResult.ANY_TYPE,null),
-	      next : function() { 
-	        return this.list.iterateNext()
-	      }
-	    }
-	  } else {
-	    return {
-	      list: node.selectNodes(expr),
-	      i : 0,
-	      next: function() {
-	        if (this.i > this.list.length)
-	          return null;
-	        return this.list[this.i++];
-	      }
-	    }
-	  }
-
+		if (this.document.documentElement.tagName.toLowerCase() == 'template') return Tranjsform.Shim.innerHTML(this.document.documentElement);
+		else return Tranjsform.Shim.outerHTML(this.document.documentElement);
 	};
 };
 
@@ -880,26 +836,8 @@ Tranjsform.PseudoMatcher = function(pseudo, dataFunction) {
 	this.nth = function(pseudo, element) {
 		if (pseudo.indexOf('nth-child') == 0) {
 			var criteria = this.getBetween(pseudo, '(', ')');
-			
-			// In Internet Explorer 11, parentNode.children is undefined in some cases that come up for this library's usage.
-			var children = function(node) {
-				if (node.children) {
-					return node.children;
-				} else {
-					var childNodes = node.childNodes;
-					for (var i = 0; i < childNodes.length;) {
-						if (!(childNodes[i] instanceof Element)) {
-							Array.prototype.splice.call(childNodes, i, 1);
-						} else {
-							i++;
-						}
-					}
-					return childNodes;
-				}
-			};
-			
 			//Which child index is the current element?
-			var num = Array.prototype.indexOf.call(children(element.parentNode), element)+1;
+			var num = Array.prototype.indexOf.call(Tranjsform.Shim.children(element.parentNode), element)+1;
 
 
 			if (this[criteria]) return this[criteria](num);
@@ -945,6 +883,69 @@ Tranjsform.PseudoMatcher = function(pseudo, dataFunction) {
 		}
 	};
 
+};
+
+
+Tranjsform.Shim = function() {};
+
+// Internet Explorer 11 doesn't put innerHTML or outerHTML on non-HTML tags created by DOMParser with mime "text/xml".
+Tranjsform.Shim.outerHTML = function(node) {
+	if (node.outerHTML) {
+		return node.outerHTML;
+	} else {
+		var tempHolder = window.document.createElement("div");
+		tempHolder.appendChild(tempHolder.ownerDocument.importNode(node, true));
+		return tempHolder.innerHTML.trim();
+	}
+};
+Tranjsform.Shim.innerHTML = function(node) {
+	if (node.innerHTML) {
+		return node.innerHTML;
+	} else {
+		return Tranjsform.Shim.outerHTML(node)
+			.replace(new RegExp("</"+node.tagName+">$", "i"), "")
+			.replace(new RegExp("^<"+node.tagName+"[^>]*>", "i"), "")
+			.trim();
+	}
+};
+
+// In Internet Explorer 11, parentNode.children is undefined in some cases that come up for this library's usage.
+Tranjsform.Shim.children = function(node) {
+	if (node.children) {
+		return node.children;
+	} else {
+		var childNodes = node.childNodes;
+		for (var i = 0; i < childNodes.length;) {
+			if (!(childNodes[i] instanceof Element)) {
+				Array.prototype.splice.call(childNodes, i, 1);
+			} else {
+				i++;
+			}
+		}
+		return childNodes;
+	}
+};
+
+//http://www.ahristov.com/tutorial/javascript-tips/Browser%2Bindependant%2BXPath%2Bevaluation.html
+Tranjsform.Shim.selectXPath = function(expr, node) {
+  if (document.evaluate) {
+    return {
+      list : node.evaluate(expr,node,null,XPathResult.ANY_TYPE,null),
+      next : function() { 
+        return this.list.iterateNext()
+      }
+    }
+  } else {
+    return {
+      list: node.selectNodes(expr),
+      i : 0,
+      next: function() {
+        if (this.i > this.list.length)
+          return null;
+        return this.list[this.i++];
+      }
+    }
+  }
 };
 
 }());
