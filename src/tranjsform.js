@@ -207,27 +207,28 @@ Tranjsform.Template = function(xml) {
 		if (document) return this.document;
 		
 		// Internet Explorer 11 doesn't put innerHTML or outerHTML on non-HTML tags created by DOMParser with mime "text/xml".
-		if (this.document.documentElement.fakeInnerHTML || !this.document.documentElement.innerHTML) {
-			var tempHolder = window.document.createElement("div");
-			tempHolder.appendChild(tempHolder.ownerDocument.importNode(this.document.documentElement, true));
-			this.document.documentElement.outerHTML = tempHolder.innerHTML.trim();
-			this.document.documentElement.innerHTML = this.document.documentElement.outerHTML
-				.replace(new RegExp("</"+this.document.documentElement.tagName+">$", "i"), "")
-				.replace(new RegExp("^<"+this.document.documentElement.tagName+"[^>]*>", "i"), "")
-				.trim();
-			// We might run this function multiple times on the same template due to postprocessing;
-			// therefore, flag that the innerHTML will have to be updated on subsequent calls.
-			// If the logic were restructured such that either there was not postprocessing or it
-			// didn't call this function again, this flag would not be needed.
-			// Or we also wouldn't need the flag if we moved this into some functions that would
-			// either return innerHTML/outerHTML or if they're missing do this calculation but
-			// return its result rather than modifying the node, and used that instead of using
-			// the node's properties.
-			this.document.documentElement.fakeInnerHTML = true;
-		}
+		var outerHTML = function(node) {
+			if (node.outerHTML) {
+				return node.outerHTML;
+			} else {
+				var tempHolder = window.document.createElement("div");
+				tempHolder.appendChild(tempHolder.ownerDocument.importNode(node, true));
+				return tempHolder.innerHTML.trim();
+			}
+		};
+		var innerHTML = function(node) {
+			if (node.innerHTML) {
+				return node.innerHTML;
+			} else {
+				return outerHTML(node)
+					.replace(new RegExp("</"+node.tagName+">$", "i"), "")
+					.replace(new RegExp("^<"+node.tagName+"[^>]*>", "i"), "")
+					.trim();
+			}
+		};
 		
-		if (this.document.documentElement.tagName.toLowerCase() == 'template') return this.document.documentElement.innerHTML;
-		else return this.document.documentElement.outerHTML;
+		if (this.document.documentElement.tagName.toLowerCase() == 'template') return innerHTML(this.document.documentElement);
+		else return outerHTML(this.document.documentElement);
 	};
 
 	//http://www.ahristov.com/tutorial/javascript-tips/Browser%2Bindependant%2BXPath%2Bevaluation.html
