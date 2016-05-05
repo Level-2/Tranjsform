@@ -86,7 +86,7 @@ Tranjsform.Builder = function(template, tss, data) {
 
 			var rules = this.cache.load(key, new Date().getTime());
 
-			if (!rules) return this.cache.write(key, new Sheet(this.fileGetContents(this.tss), this.baseDir, template.getPrefix()).parse());
+			if (!rules) return this.cache.write(key, new Tranjsform.Sheet(this.fileGetContents(this.tss), this.baseDir, template.getPrefix()).parse());
 
 		}
 		else return new Tranjsform.Sheet(this.tss, this.baseDir, template.getPrefix()).parse();
