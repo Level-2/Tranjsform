@@ -79,7 +79,7 @@ Tranjsform.Builder = function(template, tss, data) {
 
 
 	this.getRules = function(template) {
-		if (this.tss.trim().substr(this.tss.length, -4).toLowerCase() == '.tss') {
+		if (this.tss.trim().substr(this.tss.length-4).toLowerCase() == '.tss') {
 			this.baseDir = this.tss.match(/.*\//);
 
 			var key = this.tss + template.getPrefix() + this.baseDir;
