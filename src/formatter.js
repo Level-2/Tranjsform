@@ -206,7 +206,7 @@ Tranjsform.Formatter.Date = function(locale) {
 
 		var diffDays = diff / (1000 * 60 * 60 * 24);
 
-		if (Math,abs(diffDays) > 0) return this.dayOffset(Math.ceil(diffDays));
+		if (Math.abs(diffDays) > 0) return this.dayOffset(Math.ceil(diffDays));
 		else return this.timeOffset(diff);
 	};
 

@@ -79,14 +79,14 @@ Tranjsform.Builder = function(template, tss, data) {
 
 
 	this.getRules = function(template) {
-		if (this.tss.trim().substr(this.tss.length, -4).toLowerCase() == '.tss') {
+		if (this.tss.trim().substr(this.tss.length-4).toLowerCase() == '.tss') {
 			this.baseDir = this.tss.match(/.*\//);
 
 			var key = this.tss + template.getPrefix() + this.baseDir;
 
 			var rules = this.cache.load(key, new Date().getTime());
 
-			if (!rules) return this.cache.write(key, new Sheet(this.fileGetContents(this.tss), this.baseDir, template.getPrefix()).parse());
+			if (!rules) return this.cache.write(key, new Tranjsform.Sheet(this.fileGetContents(this.tss), this.baseDir, template.getPrefix()).parse());
 
 		}
 		else return new Tranjsform.Sheet(this.tss, this.baseDir, template.getPrefix()).parse();
@@ -534,11 +534,11 @@ Tranjsform.Hook.Formatter = function() {
 			for (var j in this.formatters) {
 				if (this.formatters[j][functionName]) {
 					if (format.length > 0) {
-						var original_value = value[i];
+						var originalValue = value[i];
 						value[i] = "";
 						for (var k in format) {
 							if (value[i] != "") { value[i] += " "; }
-							value[i] += this.formatters[j][functionName](original_value, format[k]);
+							value[i] += this.formatters[j][functionName](originalValue, format[k]);
 						}
 					} else {
 						value[i] = this.formatters[j][functionName](value[i]);
