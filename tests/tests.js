@@ -430,6 +430,33 @@ QUnit.test( ":nth-child(even)", function( assert ) {
 });
 
 
+QUnit.test( ":nth-child w/non-element childNodes", function( assert ) {
+
+	var template = '<div>' +
+				'<span>One</span>' +
+				'<!--ignore comment-->' +
+				'and' +
+				'<span>Two</span>' +
+				'<span>Three</span>' +
+				'<span>Four</span>' +
+			'</div>';
+
+	var tss =  'div>*:nth-child(2) {content: "REPLACED"}';
+
+	template = new Tranjsform.Builder(template, tss);
+
+	assert.equal(stripTabs('<div>' +
+				'<span>One</span>' +
+				'<!--ignore comment-->' +
+				'and' +
+				'<span>REPLACED</span>' +
+				'<span>Three</span>' +
+				'<span>Four</span>' +
+			'</div>'), stripTabs(template.output().body));
+
+});
+
+
 QUnit.test( "read attribute", function( assert ) {
 
 	var template = '<div class="fromattribute">Test</div>';
