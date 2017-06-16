@@ -109,15 +109,15 @@ data.title = 'My Title!';
 data.description = 'Description of the page...';
 
 
-var xml = '
+var xml = `
 	<h1>Example Title</h1>
 	<p>Example Description</p>
-	';
+	`;
 
-var tss ='
+var tss =`
 	h1 {content: data(title);}
 	p {content: data(description);}
-';
+`;
 
 var template = new Tranjsform.Builder(xml, tss, data);
 
@@ -188,16 +188,16 @@ Using Tranjsform, the user list can be generated like this:
 
 ```javascript
 
-var xml = '<ul>
+var xml = `<ul>
 	<li>Name</li>	
-</ul>';
+</ul>`;
 
 
-var tss ='
+var tss =`
 	ul li {repeat: data(users); content: iteration(name);}
-';
+`;
 
-var data = { users: users};
+var data = { users};
 
 
 var template = new Tranjsform.Builder(xml, tss, data);
@@ -225,21 +225,21 @@ console.log(template.output());
 Similarly, `iteration` can read specific values and be used in nested nodes:
 
 ```javascript
-var xml = '<ul>
+var xml = `<ul>
 	<li>
 		<h3>Name</h3>
 		<span>email</span>
 	</li>	
-</ul>';
+</ul>`;
 
 
-var tss ='
+var tss =`
 	ul li {repeat: data(users);}
 	ul li h3 {content: iteration(name);}
 	ul li span {content: iteration(email);}
-';
+`;
 
-var data = {users : users};
+var data = {users};
 
 
 var template = new Tranjsform.Builder(xml, tss, data);
@@ -272,21 +272,21 @@ Lifted straight from css grammar, Tranjsform supports `display: none` which will
 
 ```javascript
 
-var xml = '<ul>
+var xml = `<ul>
 	<li>
 		<h3>Name</h3>
 		<span>email</span>
 	</li>	
-</ul>';
+</ul>`;
 
 
-var tss ='
+var tss =`
 	ul li {repeat: data(users);}
 	ul li h3 {content: iteration(name);}
 	ul li span {display: none}
-';
+`;
 
-var data = {users : users};
+var data = {users};
 
 
 var template = new Tranjsform.Builder(xml, tss, data);
@@ -322,17 +322,17 @@ Tranjsform supports the following CSS selectors:
 
 ```javascript
 
-var xml = '
+var xml = `
 	<main>
 		<p>Paragraph one</p>
 		<p class="middle">Paragraph two</p>
 		<p>Paragraph 3</p>
 	</main>
-';
+`;
 
-var tss ='
+var tss =`
 .middle {content: "Middle paragraph"; }
-';
+`;
 
 var template = new Tranjsform.Builder(xml, tss);
 
@@ -357,18 +357,18 @@ Output:
 
 ```javascript
 
-var xml = '
+var xml = `
 	<main>
 		<p>Paragraph one</p>
 		<p class="middle">Paragraph two</p>
 		<p>Paragraph 3</p>
 		<a class="middle">A link</a>
 	</main>
-';
+`;
 
-var tss ='
+var tss =`
 p.middle {content: "Middle paragraph"; }
-';
+`;
 
 var template = new Tranjsform.Builder(xml, tss);
 
@@ -396,7 +396,7 @@ Output:
 
 ```javascript
 
-var xml = '
+var xml = `
 	<ul>
 		<li>One</li>
 		<li>Two
@@ -409,11 +409,11 @@ var xml = '
 		</li>
 	</ul>
 
-';
+`;
 
-var tss ='
+var tss =`
 li > span {content: "REPLACED";}
-';
+`;
 
 var template = new Tranjsform.Builder(xml, tss);
 
@@ -442,17 +442,17 @@ Output:
 
 ```javascript
 
-var xml = '
+var xml = `
 	<main>
 		<p>Paragraph one</p>
 		<p id="middle">Paragraph two</p>
 		<p>Paragraph 3</p>
 	</main>
-';
+`;
 
-var tss ='
+var tss =`
 #middle {content: "Middle paragraph"; }
-';
+`;
 
 var template = new Tranjsform.Builder(xml, tss);
 
@@ -477,7 +477,7 @@ Like CSS, you can select elements that have a specific attribute:
 
 ```javascript
 
-var xml = '
+var xml = `
 	<textarea name="One">
 	</textarea>
 
@@ -488,11 +488,11 @@ var xml = '
 	<textarea>
 
 	</textarea>
-';
+`;
 
-var tss ='
+var tss =`
 textarea[name="Two"] {content: "TEST"; }
-';
+`;
 
 var template = new Tranjsform.Builder(xml, tss);
 
@@ -520,7 +520,7 @@ Or, any element that has a specific attribute:
 
 ```javascript
 
-var xml = '
+var xml = `
 	<textarea name="One">
 	</textarea>
 
@@ -531,11 +531,11 @@ var xml = '
 	<textarea>
 
 	</textarea>
-';
+`;
 
-var tss ='
+var tss =`
 textarea[name] {content: "TEST"; }
-';
+`;
 
 var template = new Tranjsform.Builder(xml, tss);
 
@@ -589,13 +589,13 @@ Tranjsform also supports several pseudo elements.
 ```javascript
 
 
-var xml = '
+var xml = `
 	<h1>Example Title</h1>
-	';
+	`;
 
-var tss ='
+var tss =`
 	h1:before {content: "BEFORE ";}
-';
+`;
 
 var template = new Tranjsform.Builder(xml, tss);
 
@@ -617,13 +617,13 @@ Output:
 ```javascript
 
 
-var xml = '
+var xml = `
 	<h1>Example Title</h1>
-	';
+	`;
 
-var tss ='
+var tss =`
 	h1:after {content: " AFTER";}
-';
+`;
 
 var template = new Tranjsform.Builder(xml, tss);
 
@@ -648,14 +648,14 @@ Straight from CSS, Tranjsform also supports `nth-child(NUM)`. As well as `nth-ch
 
 
 ```javascript
-var xml = '
+var xml = `
 		<ul>
 			<li>One</li>
 			<li>Two</li>
 			<li>Three</li>
 			<li>Four</li>
 		</ul>
-';
+`;
 
 var tss ='ul li:nth-child(2) {content: "REPLACED"}';
 
@@ -682,14 +682,14 @@ Output:
 
 
 ```javascript
-var xml = '
+var xml = `
 		<ul>
 			<li>One</li>
 			<li>Two</li>
 			<li>Three</li>
 			<li>Four</li>
 		</ul>
-';
+`;
 
 var tss ='ul li:nth-child(even) {content: "REPLACED"}';
 
@@ -715,14 +715,14 @@ Output:
 ### Odd
 
 ```javascript
-var xml = '
+var xml = `
 		<ul>
 			<li>One</li>
 			<li>Two</li>
 			<li>Three</li>
 			<li>Four</li>
 		</ul>
-';
+`;
 
 var tss ='ul li:nth-child(even) {content: "REPLACED"}';
 
@@ -784,23 +784,23 @@ users.push(user);
 
 
 
-var xml = '
+var xml = `
 <ul>
 	<li>
 		<h3>Name</h3>
 		<span>email</span>
 	</li>	
-</ul>';
+</ul>`;
 
 
-var tss ='
+var tss =`
 	ul li {repeat: data(users);}
 	ul li:iteration[type='Admin'] {display: none;}
 	ul li h3 {content: iteration(name);}
 	ul li span {content: iteration(email);}
-';
+`;
 
-var data = {users : users};
+var data = {users};
 
 
 var template = new Tranjsform.Builder(xml, tss, data);
@@ -856,22 +856,22 @@ users.push(user);
 
 
 
-var xml = '
+var xml = `
 <ul>
 	<li>
 		<h3>Name</h3>
 		<a href="mailto:email">email</span>
 	</li>	
-</ul>';
+</ul>`;
 
 
-var tss ='
+var tss =`
 	ul li {repeat: data(users);}
 	ul li a {content: iteration(email);}
 	ul li a:attr(href) {content: "mailto:", iteration(email);}
-';
+`;
 
-var data = {users : users};
+var data = {users};
 
 
 var template = new Tranjsform.Builder(xml, tss, data);
@@ -908,9 +908,9 @@ It's also possible to read from attributes using `attr(name)` inside the content
 
 
 ```javascript
-var xml = '
+var xml = `
 <h1 class="foo">bar</h1>
-';
+`;
 
 var tss ='h1 {content: attr(class);}';
 
